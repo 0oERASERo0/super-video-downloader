@@ -7,6 +7,7 @@ import com.myAllVideoBrowser.util.NotificationsHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.SystemDownloadManager
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
+import com.myAllVideoBrowser.util.nas.NasFinalizer
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import dagger.Module
@@ -24,7 +25,8 @@ class MyWorkerModule {
         proxyController: CustomProxyController,
         okHttpProxyClient: OkHttpProxyClient,
         sharedPrefHelper: SharedPrefHelper,
-        systemDownloadManager: SystemDownloadManager
+        systemDownloadManager: SystemDownloadManager,
+        nasFinalizer: NasFinalizer,
     ): WorkerFactory {
         return DaggerWorkerFactory(
             progressRepository,
@@ -33,7 +35,8 @@ class MyWorkerModule {
             proxyController,
             okHttpProxyClient,
             sharedPrefHelper,
-            systemDownloadManager
+            systemDownloadManager,
+            nasFinalizer,
         )
     }
 }

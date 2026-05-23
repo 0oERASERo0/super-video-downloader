@@ -17,6 +17,7 @@ import com.myAllVideoBrowser.util.downloaders.SystemDownloadManager
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
+import com.myAllVideoBrowser.util.nas.NasFinalizer
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import io.reactivex.rxjava3.disposables.Disposable
@@ -45,6 +46,11 @@ abstract class GenericDownloadWorkerWrapper(
 
     @Inject
     lateinit var systemDownloadManager: SystemDownloadManager
+
+    @Inject
+    lateinit var nasFinalizer: NasFinalizer
+
+    protected fun isNasFinalizerReady(): Boolean = ::nasFinalizer.isInitialized
 
     private var disposable: Disposable? = null
 

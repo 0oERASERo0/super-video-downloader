@@ -8,3 +8,5 @@ release/
 captures/*
 .externalNativeBuild
 /app/libs/libv2ray*
+app/src/main/go/builder/vendor/
+app/src/main/jniLibs/

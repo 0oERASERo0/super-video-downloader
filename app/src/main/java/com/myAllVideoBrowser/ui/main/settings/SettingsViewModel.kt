@@ -6,10 +6,14 @@ import androidx.databinding.ObservableField
 import androidx.databinding.ObservableInt
 import androidx.lifecycle.viewModelScope
 //import com.allVideoDownloaderXmaster.OpenForTesting
+import com.myAllVideoBrowser.data.nas.NasConfig
+import com.myAllVideoBrowser.data.nas.NasCredentialsStore
+import com.myAllVideoBrowser.data.nas.NasDestinationType
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.SingleLiveEvent
+import com.myAllVideoBrowser.util.nas.NasUploadManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -25,6 +29,8 @@ enum class StorageType {
 //@OpenForTesting
 class SettingsViewModel @Inject constructor(
     private val sharedPrefHelper: SharedPrefHelper,
+    private val nasCredentialsStore: NasCredentialsStore,
+    private val nasUploadManager: NasUploadManager,
 ) :
     BaseViewModel() {
     val isAskRedirection = ObservableBoolean(false)
@@ -35,6 +41,9 @@ class SettingsViewModel @Inject constructor(
 
     val clearCookiesEvent = SingleLiveEvent<Void?>()
     val openVideoFolderEvent = SingleLiveEvent<Void?>()
+    val openNasSettingsEvent = SingleLiveEvent<Void?>()
+    val nasConfig = ObservableField(NasConfig())
+    val nasDestinationLabel = ObservableField("Local")
     val isDesktopMode = ObservableBoolean(false)
     val isDarkMode = ObservableBoolean(false)
     val isAutoDarkMode = ObservableBoolean(true)
@@ -87,7 +96,11 @@ class SettingsViewModel @Inject constructor(
                 StorageType.HIDDEN
             }
 
+            val loadedNas = nasCredentialsStore.load()
+
             withContext(Dispatchers.Main) {
+                nasConfig.set(loadedNas)
+                nasDestinationLabel.set(loadedNas.describe())
                 queueSize.set(simDownloadsCount)
                 isUseLegacyM3u8Detection.set(useLegacy)
                 isAlwaysRemuxRegularDownloads.set(alwaysRemux)
@@ -372,6 +385,43 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             sharedPrefHelper.setIsExternalUse(true)
             sharedPrefHelper.setIsAppDirUse(true)
+        }
+    }
+
+    fun openNasSettings() {
+        openNasSettingsEvent.call()
+    }
+
+    fun reloadNasConfig() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val cfg = nasCredentialsStore.load()
+            withContext(Dispatchers.Main) {
+                nasConfig.set(cfg)
+                nasDestinationLabel.set(cfg.describe())
+            }
+        }
+    }
+
+    fun saveNasConfig(config: NasConfig) {
+        viewModelScope.launch(Dispatchers.IO) {
+            nasCredentialsStore.save(config)
+            withContext(Dispatchers.Main) {
+                nasConfig.set(config)
+                nasDestinationLabel.set(config.describe())
+            }
+        }
+    }
+
+    fun testNasConnection(config: NasConfig, onResult: (Result<Unit>) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = if (config.type == NasDestinationType.LOCAL) {
+                Result.success(Unit)
+            } else {
+                nasUploadManager.testConnection(config)
+            }
+            withContext(Dispatchers.Main) {
+                onResult(result)
+            }
         }
     }
 

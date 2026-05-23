@@ -94,6 +94,10 @@ desugarJdk = "2.1.5"
 # NDK
 ndk = "27.3.13750724"
 
+# NAS / Storage
+securityCrypto = "1.1.0-alpha06"
+smbj = "0.14.0"
+
 # Build SDK versions
 minSdk = "24"
 targetSdk = "36"
@@ -119,6 +123,10 @@ appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat"
 material = { module = "com.google.android.material:material", version.ref = "material" }
 constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
+
+# NAS / Storage
+securityCrypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
+smbj = { module = "com.hierynomus:smbj", version.ref = "smbj" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 coreKtx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
