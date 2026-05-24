@@ -757,6 +757,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 if (fileMoved) {
                     AppLogger.d("SuperX: File moved successfully to $targetPath")
                     sourcePath.parentFile?.deleteRecursively()
+                    uploadToNasIfEnabled(File(targetPath), item)
                     val successProgress = Progress(item.totalSize, item.totalSize)
                     saveProgress(item.mId, successProgress, VideoTaskState.SUCCESS, "Success")
                 } else {
@@ -929,6 +930,20 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             getContinuation().resume(Result.failure())
         } catch (e: Throwable) {
             e.printStackTrace()
+        }
+    }
+
+    private fun uploadToNasIfEnabled(target: File, item: VideoTaskItem?) {
+        if (!isNasFinalizerReady() || !nasFinalizer.isEnabled()) return
+        try {
+            val result = nasFinalizer.finalizeQuiet(applicationContext, target, item)
+            if (result.uploaded) {
+                AppLogger.d("SuperX: NAS upload OK -> ${result.remoteUri}")
+            } else if (result.error != null) {
+                AppLogger.w("SuperX: NAS upload failed (${result.error})")
+            }
+        } catch (e: Throwable) {
+            AppLogger.e("SuperX: NAS upload threw ${e.message}")
         }
     }
 }

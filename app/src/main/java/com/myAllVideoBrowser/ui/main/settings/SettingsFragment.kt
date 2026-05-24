@@ -165,6 +165,17 @@ class SettingsFragment : BaseFragment() {
         settingsViewModel.openVideoFolderEvent.observe(viewLifecycleOwner) {
             intentUtil.openVideoFolder(context, fileUtil.folderDir.path)
         }
+        settingsViewModel.openNasSettingsEvent.observe(viewLifecycleOwner) {
+            val ctx = context ?: return@observe
+            val current = settingsViewModel.nasConfig.get()
+                ?: com.myAllVideoBrowser.data.nas.NasConfig()
+            NasSettingsDialog.show(
+                context = ctx,
+                initial = current,
+                onTest = { cfg, cb -> settingsViewModel.testNasConnection(cfg, cb) },
+                onSave = { cfg -> settingsViewModel.saveNasConfig(cfg) }
+            )
+        }
     }
 
     private fun setupTextUpdateCallbacks() {

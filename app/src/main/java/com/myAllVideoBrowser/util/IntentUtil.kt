@@ -45,6 +45,24 @@ class IntentUtil @Inject constructor(private val fileUtil: FileUtil) {
         }
     }
 
+    fun shareRemoteUri(context: Context, uri: Uri, displayName: String) {
+        val intent = Intent(Intent.ACTION_SEND)
+        intent.type = "text/plain"
+        val text = "$displayName\n$uri"
+        intent.putExtra(Intent.EXTRA_TEXT, text)
+        intent.putExtra(Intent.EXTRA_SUBJECT, displayName)
+        intent.clipData = ClipData.newPlainText(displayName, text)
+        if (intent.resolveActivityInfo(context.packageManager, 0) != null) {
+            context.startActivity(Intent.createChooser(intent, "Share via:"))
+        } else {
+            Toast.makeText(
+                context,
+                context.getString(R.string.video_share_message),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     fun shareVideo(context: Context, uri: Uri) {
         val intent = Intent(Intent.ACTION_SEND)
         intent.type = "video/*"

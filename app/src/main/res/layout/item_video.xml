@@ -75,11 +75,34 @@
                 android:layout_marginTop="4dp"
                 android:text="@{localVideo.size}"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/iv_more"
                 app:layout_constraintStart_toEndOf="@id/iv_thumbnail"
                 app:layout_constraintTop_toBottomOf="@id/tv_name"
                 tools:text="12.5 MB" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_remote"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="4dp"
+                android:clickable="false"
+                android:focusable="false"
+                android:text="@{localVideo.remoteLabelOrEmpty}"
+                android:textSize="11sp"
+                android:visibility="@{localVideo.isRemoteVisible ? View.VISIBLE : View.GONE}"
+                app:chipBackgroundColor="?attr/colorSecondaryContainer"
+                app:chipIcon="@drawable/ic_cloud_done_24dp"
+                app:chipIconTint="?attr/colorOnSecondaryContainer"
+                app:chipMinHeight="24dp"
+                app:chipStrokeWidth="0dp"
+                app:ensureMinTouchTargetSize="false"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/iv_more"
+                app:layout_constraintStart_toEndOf="@id/iv_thumbnail"
+                app:layout_constraintTop_toBottomOf="@id/tv_size"
+                tools:text="WebDAV: 192.168.1.5/media" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/iv_more"

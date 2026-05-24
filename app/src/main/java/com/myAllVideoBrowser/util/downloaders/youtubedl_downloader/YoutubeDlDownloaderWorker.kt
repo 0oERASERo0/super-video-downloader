@@ -106,6 +106,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                     val moved =
                         fileUtil.moveMedia(applicationContext, firstPart.toUri(), dist.toUri())
                     if (moved) {
+                        uploadToNasIfEnabled(dist, task)
                         finishWork(task.also { it.taskState = VideoTaskState.SUCCESS })
                     } else {
                         finishWork(task.also { it.taskState = VideoTaskState.ERROR })
@@ -329,12 +330,17 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                 if (moved) {
                     tmpFile.deleteRecursively()
                 }
-                finishWork(VideoTaskItem(url).also { f ->
+
+                val taskItemForNas = VideoTaskItem(url).also { f ->
                     f.fileName = finalFile.name
                     f.errorCode = if (moved) 0 else 1
                     f.percent = 100F
                     f.taskState = if (moved) VideoTaskState.SUCCESS else VideoTaskState.ERROR
-                })
+                }
+                if (moved) {
+                    uploadToNasIfEnabled(destinationFile, taskItemForNas)
+                }
+                finishWork(taskItemForNas)
             } else {
                 val fixedList = tmpFile.listFiles()?.filter { !it.name.contains("part") }
                 this@YoutubeDlDownloaderWorker.cookieFile?.delete()
@@ -729,6 +735,20 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         YoutubeDL.getInstance().destroyProcessById(taskId)
 
         destroyChildProcesses()
+    }
+
+    private fun uploadToNasIfEnabled(target: File, item: VideoTaskItem?) {
+        if (!isNasFinalizerReady() || !nasFinalizer.isEnabled()) return
+        try {
+            val result = nasFinalizer.finalizeQuiet(applicationContext, target, item)
+            if (result.uploaded) {
+                AppLogger.d("YoutubeDl: NAS upload OK -> ${result.remoteUri}")
+            } else if (result.error != null) {
+                AppLogger.w("YoutubeDl: NAS upload failed (${result.error})")
+            }
+        } catch (e: Throwable) {
+            AppLogger.e("YoutubeDl: NAS upload threw ${e.message}")
+        }
     }
 
     private fun destroyChildProcesses(): Boolean {

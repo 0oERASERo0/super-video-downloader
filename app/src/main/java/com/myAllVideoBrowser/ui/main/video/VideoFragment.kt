@@ -127,6 +127,12 @@ class VideoFragment : BaseFragment() {
 
     private val videoListener = object : VideoListener {
         override fun onItemClicked(localVideo: LocalVideo) {
+            if (localVideo.isRemote) {
+                intentUtil.shareRemoteUri(
+                    requireContext(), localVideo.uri, localVideo.name
+                )
+                return
+            }
             startVideo(localVideo)
         }
 
@@ -140,7 +146,12 @@ class VideoFragment : BaseFragment() {
 
         popupMenu.menuInflater.inflate(R.menu.menu_video, popupMenu.menu)
         popupMenu.setForceShowIcon(true)
-        popupMenu.menu[5].isVisible = isVideoInHiddenFolderFolder(video)
+        popupMenu.menu[5].isVisible = !video.isRemote && isVideoInHiddenFolderFolder(video)
+        if (video.isRemote) {
+            popupMenu.menu.findItem(R.id.item_rename)?.isVisible = false
+            popupMenu.menu.findItem(R.id.item_open_with)?.isVisible = false
+            popupMenu.menu.findItem(R.id.item_move_to_downloads)?.isVisible = false
+        }
         popupMenu.show()
 
         popupMenu.setOnMenuItemClickListener { arg0 ->
@@ -170,7 +181,11 @@ class VideoFragment : BaseFragment() {
                 }
 
                 R.id.item_share -> {
-                    videoViewModel.shareEvent.value = video.uri
+                    if (video.isRemote) {
+                        intentUtil.shareRemoteUri(view.context, video.uri, video.name)
+                    } else {
+                        videoViewModel.shareEvent.value = video.uri
+                    }
                     true
                 }
 

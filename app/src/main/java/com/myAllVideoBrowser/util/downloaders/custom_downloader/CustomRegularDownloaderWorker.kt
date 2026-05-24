@@ -235,6 +235,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 finalSource.toFile().parentFile?.deleteRecursively()
             }
 
+            uploadToNasIfEnabled(File(target), finalItem)
+
             finishWork(finalItem)
 
         } catch (e: Throwable) {
@@ -525,6 +527,20 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             getContinuation().resume(Result.failure())
         } catch (e: Throwable) {
             e.printStackTrace()
+        }
+    }
+
+    private fun uploadToNasIfEnabled(target: File, item: VideoTaskItem?) {
+        if (!isNasFinalizerReady() || !nasFinalizer.isEnabled()) return
+        try {
+            val result = nasFinalizer.finalizeQuiet(applicationContext, target, item)
+            if (result.uploaded) {
+                AppLogger.d("CustomRegular: NAS upload OK -> ${result.remoteUri}")
+            } else if (result.error != null) {
+                AppLogger.w("CustomRegular: NAS upload failed (${result.error})")
+            }
+        } catch (e: Throwable) {
+            AppLogger.e("CustomRegular: NAS upload threw ${e.message}")
         }
     }
 }

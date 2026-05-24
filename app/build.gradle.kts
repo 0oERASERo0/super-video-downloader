@@ -254,6 +254,10 @@ dependencies {
     // Key value DB
     implementation(libs.mmkv)
 
+    // NAS uploads
+    implementation(libs.securityCrypto)
+    implementation(libs.smbj)
+
     implementation(libs.kotlinx.coroutines.rx3)
 
     // Dagger 2 - Dependency Injection

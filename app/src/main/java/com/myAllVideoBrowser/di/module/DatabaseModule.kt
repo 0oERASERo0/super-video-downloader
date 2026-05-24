@@ -9,6 +9,7 @@ import com.myAllVideoBrowser.data.local.room.dao.ConfigDao
 import com.myAllVideoBrowser.data.local.room.dao.HistoryDao
 import com.myAllVideoBrowser.data.local.room.dao.PageDao
 import com.myAllVideoBrowser.data.local.room.dao.ProgressDao
+import com.myAllVideoBrowser.data.local.room.dao.RemoteVideoDao
 import com.myAllVideoBrowser.data.local.room.dao.VideoDao
 import dagger.Module
 import dagger.Provides
@@ -102,6 +103,24 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
     }
 }
 
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS RemoteVideoInfo (
+                id TEXT NOT NULL PRIMARY KEY,
+                name TEXT NOT NULL DEFAULT '',
+                remoteUri TEXT NOT NULL DEFAULT '',
+                destinationType TEXT NOT NULL DEFAULT '',
+                destinationLabel TEXT NOT NULL DEFAULT '',
+                sizeBytes INTEGER NOT NULL DEFAULT 0,
+                createdAt INTEGER NOT NULL DEFAULT 0
+            )
+            """.trimIndent()
+        )
+    }
+}
+
 @Module
 class DatabaseModule {
 
@@ -116,7 +135,8 @@ class DatabaseModule {
             MIGRATION_5_6,
             MIGRATION_6_7,
             MIGRATION_7_8,
-            MIGRATION_8_9
+            MIGRATION_8_9,
+            MIGRATION_9_10
         ).build()
     }
 
@@ -139,4 +159,8 @@ class DatabaseModule {
     @Singleton
     @Provides
     fun providePageDao(database: AppDatabase): PageDao = database.pageDao()
+
+    @Singleton
+    @Provides
+    fun provideRemoteVideoDao(database: AppDatabase): RemoteVideoDao = database.remoteVideoDao()
 }

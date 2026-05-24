@@ -8,6 +8,8 @@ import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
 //import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.data.local.model.LocalVideo
+import com.myAllVideoBrowser.data.local.room.dao.RemoteVideoDao
+import com.myAllVideoBrowser.data.local.room.entity.RemoteVideoInfo
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
@@ -23,6 +25,7 @@ import javax.inject.Inject
 //@OpenForTesting
 class VideoViewModel @Inject constructor(
     private val fileUtil: FileUtil,
+    private val remoteVideoDao: RemoteVideoDao,
 ) : BaseViewModel() {
 
     companion object {
@@ -41,7 +44,9 @@ class VideoViewModel @Inject constructor(
             while (true) {
                 delay(1000)
                 val newList = getFilesList().toMutableList()
-                newList.sortBy { it.uri }
+                newList.sortWith(
+                    compareBy({ !it.isRemote }, { it.name.lowercase() })
+                )
                 localVideos.set(newList)
             }
         }
@@ -66,10 +71,58 @@ class VideoViewModel @Inject constructor(
             listVideos.add(video)
         }
 
+        try {
+            val localNames = listVideos.map { it.name }.toHashSet()
+            remoteVideoDao.listAll().forEach { remote ->
+                if (localNames.contains(remote.name)) {
+                    listVideos.find { it.name == remote.name }?.let { match ->
+                        match.isRemote = true
+                        match.remoteLabel = remote.destinationLabel
+                        match.remoteRecordId = remote.id
+                    }
+                } else {
+                    listVideos.add(remote.toLocalVideo())
+                }
+            }
+        } catch (e: Throwable) {
+            AppLogger.e("Loading remote videos failed: ${e.message}")
+        }
+
         return listVideos.toList()
     }
 
+    private fun RemoteVideoInfo.toLocalVideo(): LocalVideo {
+        val uri = try {
+            Uri.parse(remoteUri)
+        } catch (e: Throwable) {
+            Uri.EMPTY
+        }
+        return LocalVideo(
+            id = id.hashCode().toLong(),
+            uri = uri,
+            name = name,
+            isRemote = true,
+            remoteLabel = destinationLabel,
+            remoteRecordId = id,
+        ).also {
+            it.size = FileUtil.getFileSizeReadable(sizeBytes.toDouble())
+        }
+    }
+
     fun deleteVideo(context: Context, video: LocalVideo) {
+        if (video.isRemote && video.remoteRecordId != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    remoteVideoDao.deleteById(video.remoteRecordId!!)
+                } catch (e: Throwable) {
+                    AppLogger.e("Remote video delete failed: ${e.message}")
+                }
+            }
+            val list = localVideos.get()?.toMutableList()
+            list?.remove(video)
+            localVideos.set(list ?: mutableListOf())
+            return
+        }
         localVideos.get()?.find { it.uri.path == video.uri.path }?.let {
             fileUtil.deleteMedia(context, video.uri)
 
