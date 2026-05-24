@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+
+    <!--
+        Cleartext HTTP is permitted because users configure their own
+        WebDAV NAS destinations, which on a LAN are almost always
+        plain HTTP. Android's <domain> match does not support CIDR /
+        IP ranges, so we cannot pin this to RFC1918 only.
+
+        For any HTTPS endpoint, system and user trust anchors are used
+        as normal.
+    -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+
+</network-security-config>
